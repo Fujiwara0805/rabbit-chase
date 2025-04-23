@@ -5,6 +5,7 @@ import { AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import GameTitle from '@/components/game/game-title';
 import LoadingScreen from '@/components/game/loading-screen';
+import SoundToggle from '@/components/game/sound-toggle';
 import { useGameStore } from '@/lib/store/game-store';
 
 // Dynamically import GameScreen with SSR disabled to prevent hydration issues
@@ -40,6 +41,8 @@ export default function Home() {
 
   return (
     <main className="relative w-full h-screen overflow-hidden bg-gradient-to-b from-neutral-800 to-neutral-900">
+      <SoundToggle />
+      
       <AnimatePresence mode="wait">
         {isLoading ? (
           <LoadingScreen key="loading" />

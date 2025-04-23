@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Rabbit, Play, Trophy } from 'lucide-react';
@@ -8,6 +8,7 @@ import { useGameStore } from '@/lib/store/game-store';
 import HowToPlay from './how-to-play';
 import PlayerNameModal from './player-name-modal';
 import RankingScreen from './ranking-screen';
+import { useAudio } from '@/lib/contexts/audio-context';
 
 interface GameTitleProps {
   onStartGame: () => void;
@@ -17,6 +18,7 @@ export default function GameTitle({ onStartGame }: GameTitleProps) {
   const startGame = useGameStore(state => state.startGame);
   const [showNameModal, setShowNameModal] = useState(false);
   const [showRanking, setShowRanking] = useState(false);
+  const { playBgm, stopBgm, BGM_PATH } = useAudio();
   
   const handleStartClick = () => {
     setShowNameModal(true);
@@ -31,6 +33,15 @@ export default function GameTitle({ onStartGame }: GameTitleProps) {
   const handleShowRanking = () => {
     setShowRanking(true);
   };
+  
+  useEffect(() => {
+    playBgm(BGM_PATH, { volume: 0.3, loop: true });
+    
+    return () => {
+      // タイトル画面からゲーム画面に移行する際はBGMを停止せず継続させるため、
+      // ここでstopBgmを呼び出さない
+    };
+  }, [playBgm, BGM_PATH]);
   
   return (
     <motion.div 

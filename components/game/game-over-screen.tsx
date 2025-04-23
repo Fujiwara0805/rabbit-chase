@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Rabbit, RotateCcw, Trophy, Share2, Clock, PopcornIcon as Poop } from 'lucide-react';
+import { Rabbit, RotateCcw, Trophy, Clock, PopcornIcon as Poop } from 'lucide-react';
 import { useGameStore } from '@/lib/store/game-store';
 import RankingScreen from '@/components/game/ranking-screen';
+import ShareDropdown from '@/components/game/share-dropdown';
+import { useAudio, SFX_PATHS } from '@/lib/contexts/audio-context';
 
 interface GameOverScreenProps {
   onRetry: () => void;
@@ -17,6 +19,19 @@ export default function GameOverScreen({ onRetry }: GameOverScreenProps) {
   const droppingsCollected = useGameStore(state => state.droppingsCollected);
   const getElapsedTime = useGameStore(state => state.getElapsedTime);
   const resetGame = useGameStore(state => state.resetGame);
+  const playerName = useGameStore(state => state.playerName);
+  const { playSfx } = useAudio();
+  
+  // ゲームオーバー時に音を再生
+  useEffect(() => {
+    if (isVictory) {
+      // ゲームクリア時の音
+      playSfx(SFX_PATHS.gameComplete, { volume: 0.6 });
+    } else {
+      // ゲームオーバー時の音
+      playSfx(SFX_PATHS.gameOver, { volume: 0.6 });
+    }
+  }, [isVictory, playSfx]);
   
   // 経過時間を表示用にフォーマット (mm:ss)
   const formatTime = (totalSeconds: number) => {
@@ -101,10 +116,13 @@ export default function GameOverScreen({ onRetry }: GameOverScreenProps) {
                 <Trophy className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
                 ランキング
               </Button>
-              <Button variant="outline" className="gap-2">
-                <Share2 className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
-                シェア
-              </Button>
+              
+              <ShareDropdown 
+                playerName={playerName || 'プレイヤー'}
+                time={getElapsedTime()}
+                droppings={droppingsCollected}
+                isVictory={isVictory}
+              />
             </div>
           </div>
         </motion.div>
