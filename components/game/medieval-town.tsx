@@ -108,8 +108,8 @@ function Building({ position, scale, color }: {
         </mesh>
         
         {/* Roof */}
-        <mesh castShadow position={[0, scale[1] + 0.5, 0]}>
-          <coneGeometry args={[Math.max(scale[0], scale[2]) / 1.5, 1, 4]} rotation={[0, Math.PI / 4, 0]} />
+        <mesh castShadow position={[0, scale[1] + 0.5, 0]} rotation={[0, Math.PI / 4, 0]}>
+          <coneGeometry args={[Math.max(scale[0], scale[2]) / 1.5, 1, 4]} />
           <meshStandardMaterial color="#8B4513" /> {/* Dark brown */}
         </mesh>
         
