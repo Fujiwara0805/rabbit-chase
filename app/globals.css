@@ -128,7 +128,7 @@
 /* Game controls */
 .joystick-container {
   position: absolute;
-  bottom: 16px;
+  bottom: 32px;
   left: 16px;
   width: 100px;
   height: 100px;
@@ -173,7 +173,7 @@
 /* Action button styles */
 .action-button {
   position: absolute;
-  bottom: 32px;
+  bottom: 48px;
   right: 32px;
   width: 64px;
   height: 64px;
