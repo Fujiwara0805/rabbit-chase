@@ -24,13 +24,22 @@ export default function GameOverScreen({ onRetry }: GameOverScreenProps) {
   
   // ゲームオーバー時に音を再生
   useEffect(() => {
-    if (isVictory) {
-      // ゲームクリア時の音
-      playSfx(SFX_PATHS.gameComplete, { volume: 0.6 });
-    } else {
-      // ゲームオーバー時の音
-      playSfx(SFX_PATHS.gameOver, { volume: 0.6 });
-    }
+    // モバイルブラウザーでも確実に再生されるように少し遅延させる
+    const timer = setTimeout(() => {
+      try {
+        if (isVictory) {
+          // ゲームクリア時の音
+          playSfx(SFX_PATHS.gameComplete, { volume: 0.8 });
+        } else {
+          // ゲームオーバー時の音
+          playSfx(SFX_PATHS.gameOver, { volume: 0.8 });
+        }
+      } catch (err) {
+        console.error('ゲーム終了音の再生に失敗:', err);
+      }
+    }, 300); // 300ms遅延で再生を試みる
+    
+    return () => clearTimeout(timer);
   }, [isVictory, playSfx]);
   
   // 経過時間を表示用にフォーマット (mm:ss)

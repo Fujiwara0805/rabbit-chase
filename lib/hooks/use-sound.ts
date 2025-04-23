@@ -17,14 +17,38 @@ export function useSound() {
   const playSfx = (src: string, options: SoundOptions = {}) => {
     if (!isSoundEnabled) return;
     
-    // 新しいオーディオ要素を作成（同時に複数の効果音を再生できるようにするため）
-    const audio = new Audio(src);
-    audio.volume = options.volume ?? 0.5;
-    
-    // 再生
-    audio.play().catch(err => {
-      console.error('効果音の再生に失敗しました:', err);
-    });
+    try {
+      // 既存のオーディオ要素を再利用して初期化の問題を軽減
+      if (!sfxRef.current) {
+        sfxRef.current = new Audio();
+      }
+      
+      // 新しいソースを設定
+      sfxRef.current.src = src;
+      sfxRef.current.volume = options.volume ?? 0.5;
+      sfxRef.current.loop = options.loop ?? false;
+
+      // モバイルデバイスでの再生問題に対応するため、Promise処理を適切に行う
+      const playPromise = sfxRef.current.play();
+      
+      // play()はPromiseを返すため、適切に処理
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            // 再生成功
+            console.log('効果音の再生に成功しました');
+          })
+          .catch(err => {
+            // 再生失敗 - おそらくユーザーインタラクションがない
+            console.error('効果音の再生に失敗しました:', err);
+            
+            // 自動再生ポリシーへの対応
+            // 再生に失敗した場合は、ユーザーインタラクションを待つためのフラグなどを設定できる
+          });
+      }
+    } catch (err) {
+      console.error('効果音の再生中にエラーが発生しました:', err);
+    }
   };
 
   // BGMを再生

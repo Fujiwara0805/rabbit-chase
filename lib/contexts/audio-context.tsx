@@ -37,18 +37,56 @@ const AudioContext = createContext<AudioContextType>(defaultContext);
 export function AudioProvider({ children }: { children: ReactNode }) {
   const audioFunctions = useSound();
   const [isInitialized, setIsInitialized] = useState(false);
+  const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
   
-  // ユーザーインタラクション後にオーディオを初期化
+  // WebAudioAPI の初期化とユーザーインタラクション後の自動再生ポリシー対応
   useEffect(() => {
-    const handleUserInteraction = () => {
+    // ユーザーインタラクション時に音声を有効化するヘルパー関数
+    const unlockAudio = () => {
       if (!isInitialized) {
         setIsInitialized(true);
+        
+        // WebAudioAPI のコンテキスト作成（モバイルブラウザ対応）
+        try {
+          const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+          if (!audioContext && AudioContextClass) {
+            const newContext = new AudioContextClass();
+            setAudioContext(newContext);
+            
+            // サイレントバッファを再生して自動再生ポリシーをロック解除
+            const buffer = newContext.createBuffer(1, 1, 22050);
+            const source = newContext.createBufferSource();
+            source.buffer = buffer;
+            source.connect(newContext.destination);
+            source.start(0);
+            
+            console.log('Audio context initialized successfully');
+          }
+        } catch (e) {
+          console.error('WebAudio API initialization failed:', e);
+        }
         
         // 事前にオーディオをプリロードしておく
         const preloadAudio = (src: string) => {
           const audio = new Audio();
           audio.src = src;
           audio.preload = 'auto';
+          
+          // モバイルデバイス向けにタッチ後に一度再生を試みる
+          // （ボリュームを0にして非可聴状態で）
+          audio.volume = 0;
+          const playPromise = audio.play();
+          if (playPromise !== undefined) {
+            playPromise
+              .then(() => {
+                // Success - immediately pause to keep it silent
+                audio.pause();
+                audio.volume = 1.0; // Restore volume for later actual playback
+              })
+              .catch(e => {
+                console.log('Preload play attempt failed (expected):', e);
+              });
+          }
         };
         
         // BGMと効果音をプリロード
@@ -56,22 +94,26 @@ export function AudioProvider({ children }: { children: ReactNode }) {
         Object.values(SFX_PATHS).forEach(preloadAudio);
         
         // イベントリスナーを削除
-        document.removeEventListener('click', handleUserInteraction);
-        document.removeEventListener('touchstart', handleUserInteraction);
-        document.removeEventListener('keydown', handleUserInteraction);
+        document.removeEventListener('click', unlockAudio);
+        document.removeEventListener('touchstart', unlockAudio);
+        document.removeEventListener('touchend', unlockAudio);
+        document.removeEventListener('keydown', unlockAudio);
       }
     };
     
-    document.addEventListener('click', handleUserInteraction);
-    document.addEventListener('touchstart', handleUserInteraction);
-    document.addEventListener('keydown', handleUserInteraction);
+    // タッチイベントを特に重視（スマホ向け）
+    document.addEventListener('click', unlockAudio);
+    document.addEventListener('touchstart', unlockAudio);
+    document.addEventListener('touchend', unlockAudio);
+    document.addEventListener('keydown', unlockAudio);
     
     return () => {
-      document.removeEventListener('click', handleUserInteraction);
-      document.removeEventListener('touchstart', handleUserInteraction);
-      document.removeEventListener('keydown', handleUserInteraction);
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('touchstart', unlockAudio);
+      document.removeEventListener('touchend', unlockAudio);
+      document.removeEventListener('keydown', unlockAudio);
     };
-  }, [isInitialized]);
+  }, [isInitialized, audioContext]);
   
   return (
     <AudioContext.Provider value={{ ...audioFunctions, BGM_PATH }}>

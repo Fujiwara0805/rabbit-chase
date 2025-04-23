@@ -126,8 +126,12 @@ function GameScene() {
         
         if (playerDroppingDist < 1) {
           collectDropping();
-          // 効果音を再生
-          playSfx(SFX_PATHS.collectDropping, { volume: 0.5 });
+          // モバイル対応: タッチした場合のユーザーインタラクションとして効果音を再生
+          try {
+            playSfx(SFX_PATHS.collectDropping, { volume: 0.7 });
+          } catch (err) {
+            console.error('うんこ獲得音の再生に失敗:', err);
+          }
           return false; // Remove this dropping
         }
         return true; // Keep this dropping
